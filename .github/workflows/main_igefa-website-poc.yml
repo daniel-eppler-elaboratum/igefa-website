@@ -24,6 +24,11 @@ jobs:
           node-version: '22.x'
 
       - name: npm install, build, and test
+        # Der Storyblok-Token wird beim Build gebraucht: astro.config.mjs liest
+        # ihn ein und baeckt ihn in den SSR-Server. Fehlt er, bleibt die Seite
+        # ohne Inhalte. Wert kommt aus dem GitHub-Repo-Secret (nicht committen).
+        env:
+          STORYBLOK_PREVIEW_TOKEN: ${{ secrets.STORYBLOK_PREVIEW_TOKEN }}
         run: |
           npm install
           npm run build --if-present
