@@ -11,8 +11,8 @@ on:
 # Name der Azure Web App (im Azure-Portal beim Anlegen vergeben).
 # Bei Bedarf hier anpassen.
 env:
-  AZURE_WEBAPP_NAME: igefa-website-poc
-  NODE_VERSION: '22'
+  AZURE_WEBAPP_NAME: igefa-website
+  NODE_VERSION: '20'
 
 # OIDC: passwortlose Anmeldung bei Azure ueber ein kurzlebiges Token.
 # Kein Publish-Profile / kein gespeichertes Passwort noetig (Basic Auth ist deaktiviert).
