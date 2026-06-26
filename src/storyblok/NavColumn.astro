@@ -1,0 +1,35 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = Storyblok-Block "nav_column" (eine Spalte/Kachel im Mega-Menue).
+const { blok } = Astro.props;
+const links = Array.isArray(blok.links) ? blok.links : [];
+const iconUrl = blok.icon?.filename ?? '';
+
+// Ist ein Link gesetzt, wird die Ueberschrift klickbar (Kachel-Stil wie "Ueber uns").
+const headingHref = resolveNavLink(blok.link);
+const hasHeadingLink = headingHref !== '#';
+---
+
+<div {...storyblokEditable(blok)}>
+  <div class="flex items-start gap-sm">
+    {iconUrl && <img src={iconUrl} alt="" loading="lazy" class="mt-xs h-6 w-6 shrink-0" />}
+    <div>
+      <h3 class="font-bold text-heading">
+        {hasHeadingLink ? (
+          <a href={headingHref} class="text-heading hover:text-brand hover:no-underline">{blok.heading}</a>
+        ) : (
+          blok.heading
+        )}
+      </h3>
+      {blok.description && <p class="mt-xs text-sm text-muted">{blok.description}</p>}
+    </div>
+  </div>
+  {links.length > 0 && (
+    <ul class="mt-sm">
+      {links.map((link: any) => <StoryblokComponent blok={link} mega />)}
+    </ul>
+  )}
+</div>

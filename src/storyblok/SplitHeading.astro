@@ -1,0 +1,14 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+
+// blok = "split_heading" — zweizeilige Ueberschrift, Zeilen in unterschiedlichen
+// CI-Farben (Zeile 1 Navy, Zeile 2 CI-Blau). Wie der Intro-Titel im Original.
+const { blok } = Astro.props;
+---
+
+<div {...storyblokEditable(blok)} class="mx-auto max-w-7xl px-md pt-xl md:px-lg">
+  <h2 class="text-4xl font-black leading-[1.1] md:text-5xl lg:text-6xl">
+    {blok.line1 && <span class="block text-heading">{blok.line1}</span>}
+    {blok.line2 && <span class="block text-brand">{blok.line2}</span>}
+  </h2>
+</div>

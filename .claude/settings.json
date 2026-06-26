@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/check-dangerous-commands.sh",
+            "description": "Blockiert gefährliche Shell-Befehle"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/check-env-leak.sh",
+            "description": "Verhindert das Committen von Secrets"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/auto-lint.sh",
+            "description": "Automatisches Linting nach Datei-Bearbeitung"
+          }
+        ]
+      }
+    ]
+  }
+}

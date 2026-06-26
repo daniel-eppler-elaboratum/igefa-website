@@ -1,0 +1,32 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = "branch_section" — Branchen-Raster + optionale dunkle CTA-Leiste.
+const { blok } = Astro.props;
+const items = Array.isArray(blok.items) ? blok.items : [];
+// Der CTA "Zum Kontakt" fuehrt zur internen Standortsuche /kontakt.
+// Externe igefa.de-Platzhalter (aus dem 1:1-Nachbau) werden hierher umgeleitet;
+// ein redaktionell gesetzter interner Link wird weiterhin verwendet.
+const rawCtaHref = resolveNavLink(blok.cta_link);
+const ctaHref = rawCtaHref === '#' || rawCtaHref.includes('igefa.de') ? '/kontakt' : rawCtaHref;
+---
+
+<section {...storyblokEditable(blok)} class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+  {blok.title && <h2 class="text-3xl font-bold text-heading md:text-4xl">{blok.title}</h2>}
+  <div class="mt-lg grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-3">
+    {items.map((item: any) => <StoryblokComponent blok={item} />)}
+  </div>
+  {blok.cta_label && (
+    <div class="mt-xl flex flex-col items-start gap-md rounded-lg bg-brand-dark px-lg py-lg md:flex-row md:items-center md:justify-between">
+      <p class="text-xl font-bold text-surface md:text-2xl">{blok.cta_label}</p>
+      <a
+        href={ctaHref}
+        class="inline-flex shrink-0 whitespace-nowrap rounded-base bg-accent px-lg py-sm font-bold text-surface transition-colors hover:bg-accent-dark hover:no-underline"
+      >
+        Zum Kontakt
+      </a>
+    </div>
+  )}
+</section>

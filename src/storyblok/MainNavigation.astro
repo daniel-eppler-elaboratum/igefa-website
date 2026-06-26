@@ -1,0 +1,93 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import NavItem from './NavItem.astro';
+import TopBarLink from './TopBarLink.astro';
+
+// blok = Storyblok-Block "main_navigation" aus der site_config-Story.
+const { blok } = Astro.props;
+const navItems = Array.isArray(blok.nav_items) ? blok.nav_items : [];
+const topBarLinks = Array.isArray(blok.top_bar) ? blok.top_bar : [];
+
+// Logo aus Storyblok (Asset-Feld). Fehlt es, faellt der Header auf den Text 'igefa' zurueck.
+const logoUrl = blok.logo?.filename ?? '';
+const logoAlt = blok.logo?.alt || 'igefa';
+---
+
+<header {...storyblokEditable(blok)} class="sticky top-0 z-50 bg-surface">
+  {topBarLinks.length > 0 && (
+    <div class="hidden md:block">
+      <div class="mx-auto flex max-w-7xl justify-end px-md pt-sm md:px-lg">
+        <!-- Verbundene Leiste: nur aussen abgerundet, Buttons durch Trennlinien getrennt -->
+        <div class="inline-flex overflow-hidden rounded-base">
+          {topBarLinks.map((item: any) => <TopBarLink blok={item} />)}
+        </div>
+      </div>
+    </div>
+  )}
+
+  <div class="mx-auto flex max-w-7xl items-center gap-lg px-md py-md md:px-lg">
+    <!-- Logo aus Storyblok; ohne Upload bleibt der Schriftzug 'igefa' als Platzhalter. -->
+    <a href="/" class="shrink-0 hover:no-underline">
+      {logoUrl ? (
+        <img src={logoUrl} alt={logoAlt} class="h-9 w-auto" />
+      ) : (
+        <span class="text-2xl font-bold text-brand">igefa</span>
+      )}
+    </a>
+
+    <!-- Desktop-Navigation direkt neben dem Logo (ab md sichtbar) -->
+    <nav aria-label="Hauptnavigation" class="hidden md:block">
+      <ul class="flex items-center gap-sm">
+        {navItems.map((item: any) => <NavItem blok={item} />)}
+      </ul>
+    </nav>
+
+    <!-- Rechte Seite: Suche (Desktop) + Burger (Mobil) -->
+    <div class="ml-auto flex items-center gap-sm">
+      <button
+        type="button"
+        aria-label="Suche"
+        class="hidden items-center justify-center rounded-base p-sm text-heading transition-colors hover:text-brand md:inline-flex"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        id="nav-burger"
+        aria-label="Menue oeffnen"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+        class="inline-flex items-center justify-center rounded-base p-sm text-brand md:hidden"
+      >
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile-Navigation: standardmaessig eingeklappt (hidden), per Burger umschaltbar -->
+  <nav id="mobile-nav" aria-label="Hauptnavigation (mobil)" class="hidden border-t border-border md:hidden">
+    <ul class="flex flex-col">
+      {navItems.map((item: any) => <NavItem blok={item} mobile />)}
+    </ul>
+  </nav>
+</header>
+
+<script>
+  // Burger-Menue auf-/zuklappen und ARIA-Status fuer Screenreader pflegen.
+  const burger = document.getElementById('nav-burger');
+  const mobileNav = document.getElementById('mobile-nav');
+
+  if (burger && mobileNav) {
+    burger.addEventListener('click', () => {
+      const isOpen = mobileNav.classList.toggle('hidden') === false;
+      burger.setAttribute('aria-expanded', String(isOpen));
+      burger.setAttribute('aria-label', isOpen ? 'Menue schliessen' : 'Menue oeffnen');
+    });
+  }
+</script>

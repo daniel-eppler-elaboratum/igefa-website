@@ -1,0 +1,136 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = Storyblok-Block "hero_slide". layout ist das EINZIGE Strukturfeld;
+// alles andere am Design ist hier im Code fix und auf jedem Slide identisch.
+const { blok } = Astro.props;
+
+const layout: 'split' | 'fullbleed' | 'subject_right' = blok.layout ?? 'split';
+const buttonHref = resolveNavLink(blok.button_link);
+const imageUrl = blok.image?.filename ?? '';
+const imageAlt = blok.image?.alt ?? '';
+const badgeUrl = blok.badge_image?.filename ?? '';
+const badgeAlt = blok.badge_image?.alt ?? '';
+// Je Slide frei waehlbare Icon-Grafik; ohne Upload bleibt das weisse Haekchen.
+const iconUrl = blok.icon_image?.filename ?? '';
+
+// Hintergrund je Layout — ausschliesslich aus Design-Tokens (kein Hex).
+// split:        CI-Blau-Verlauf-Flaeche.
+// subject_right: CI-Blau mit dezentem CSS-Muster/Verlauf (kein Bild-Asset).
+// fullbleed:    Navy als Fallback hinter dem Vollbild.
+const backgroundByLayout: Record<typeof layout, string> = {
+  split: 'background: linear-gradient(135deg, var(--color-brand), var(--color-brand-dark));',
+  subject_right:
+    'background: radial-gradient(120% 120% at 85% 15%, color-mix(in srgb, var(--color-brand-light) 35%, transparent), transparent 60%), linear-gradient(135deg, var(--color-brand), var(--color-brand-dark));',
+  fullbleed: 'background: var(--color-brand-dark);',
+};
+---
+
+<article
+  {...storyblokEditable(blok)}
+  class="hero-slide relative isolate flex min-h-[34rem] flex-col overflow-hidden md:min-h-[42rem] lg:min-h-[46rem]"
+  style={backgroundByLayout[layout]}
+  data-layout={layout}
+>
+  {/* Vollbild-Hintergrund + fester dunkler Links-Verlauf (nur bei Bildhintergrund). */}
+  {layout === 'fullbleed' && imageUrl && (
+    <>
+      <img src={imageUrl} alt={imageAlt} class="absolute inset-0 -z-10 h-full w-full object-cover" />
+      <div
+        class="absolute inset-0 -z-10"
+        style="background: linear-gradient(to right, color-mix(in srgb, var(--color-brand-dark) 85%, transparent), color-mix(in srgb, var(--color-brand-dark) 35%, transparent) 55%, transparent);"
+        aria-hidden="true"
+      ></div>
+    </>
+  )}
+
+  {/* Freigestelltes Subjekt rechts, am unteren Rand ausgerichtet. Darf ueber die
+      Kante ragen (z-10) und wird unten von der weissen Welle (z-20) geclippt. */}
+  {layout === 'subject_right' && imageUrl && (
+    <img
+      src={imageUrl}
+      alt={imageAlt}
+      class="pointer-events-none absolute bottom-0 right-0 z-10 w-3/4 max-w-[20rem] object-contain object-right-bottom md:w-1/2 md:max-w-none lg:w-[55%]"
+      style="max-height: 96%;"
+    />
+  )}
+
+  {/* Inhalts-Container (z-30). grid: einspaltig; bei split ab md zweispaltig. */}
+  <div
+    class:list={[
+      'relative z-30 mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 items-center gap-lg px-md pb-28 pt-xl md:px-lg md:pb-24',
+      layout === 'split' && 'md:grid-cols-2',
+    ]}
+  >
+    {/* Textblock — IMMER linksbuendig, weiss. Auf jedem Slide identisch.
+        w-full erzwingt die volle Spaltenbreite (sonst quetscht das Grid den
+        Block auf Minimalbreite -> Wort-fuer-Wort-Umbruch). */}
+    <div class="w-full max-w-2xl">
+      {/* Icon oben (je Slide frei waehlbar), Akzentlinie darunter. Ohne eigene
+          Grafik bleibt das weisse Haekchen als Default. Linie immer CI-Blau. */}
+      <div class="mb-lg" aria-hidden="true">
+        {iconUrl ? (
+          <img src={iconUrl} alt="" class="h-14 w-auto object-contain md:h-16" />
+        ) : (
+          <svg
+            class="h-14 w-14 text-surface md:h-16 md:w-16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+        <span class="mt-md block h-1.5 w-24 rounded-full bg-brand-light"></span>
+      </div>
+
+      {blok.headline && (
+        <h2 class="text-4xl font-extrabold leading-[1.05] text-surface md:text-6xl lg:text-7xl">
+          {blok.headline}
+        </h2>
+      )}
+      {blok.subline && (
+        <p class="mt-md max-w-[34rem] text-lg text-surface/90 md:text-2xl">{blok.subline}</p>
+      )}
+      {blok.button_label && (
+        <a
+          href={buttonHref}
+          class="mt-lg inline-flex items-center whitespace-nowrap rounded-full bg-surface px-lg py-md text-base font-extrabold text-brand transition-colors hover:bg-surface-alt hover:text-brand-dark hover:no-underline md:text-lg"
+        >
+          {blok.button_label}
+        </a>
+      )}
+    </div>
+
+    {/* split: freigestelltes Produktbild rechts in sauberer weisser Box. */}
+    {layout === 'split' && imageUrl && (
+      <div class="rounded-lg bg-surface p-md shadow-lg md:justify-self-end">
+        <img src={imageUrl} alt={imageAlt} class="mx-auto max-h-72 w-auto object-contain" />
+      </div>
+    )}
+  </div>
+
+  {/* badge_image: wenn gesetzt, IMMER oben links als Siegel. */}
+  {badgeUrl && (
+    <img
+      src={badgeUrl}
+      alt={badgeAlt}
+      class="absolute left-md top-md z-40 h-16 w-16 object-contain md:h-20 md:w-20"
+    />
+  )}
+
+  {/* Untere Kante: IMMER weisse, sanfte Kurve (keine Welle) zur naechsten Section. */}
+  <svg
+    class="absolute inset-x-0 bottom-0 z-20 block w-full"
+    style="height: clamp(2rem, 4vw, 3.5rem);"
+    viewBox="0 0 1440 80"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+  >
+    <path d="M0,24 C480,60 960,60 1440,24 L1440,80 L0,80 Z" style="fill: var(--color-surface-alt);" />
+  </svg>
+</article>

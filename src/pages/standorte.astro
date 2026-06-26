@@ -1,0 +1,141 @@
+---
+// Standortuebersicht: interaktive Karte + gekoppelte Liste.
+// Eigene Route -> hat Vorrang vor der Catch-all-Seite [...slug].astro.
+// Daten aus Storyblok (Inhaltstyp `location`).
+import Layout from '../layouts/Layout.astro';
+import { getLocations } from '../lib/locations';
+
+const locations = await getLocations();
+
+// Schlanke Punktdaten fuer die Karte (an den Client-Code unten weitergereicht).
+const mapPoints = locations.map((location) => ({
+  id: location.id,
+  name: location.name,
+  slug: location.slug,
+  street: location.street,
+  plz: location.plz,
+  city: location.city,
+  phone: location.phone,
+  lat: location.lat,
+  lng: location.lng,
+}));
+---
+
+<Layout title="Standorte – igefa">
+  <main class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+    <p class="text-sm font-semibold text-accent">Unternehmen</p>
+    <h1 class="mt-sm text-3xl font-bold text-heading md:text-4xl">igefa Standorte</h1>
+    <p class="mt-sm max-w-[42rem] text-muted">
+      Finden Sie unsere Niederlassungen auf der Karte. Klicken Sie auf einen Pin
+      oder einen Eintrag in der Liste.
+    </p>
+    <p class="mt-xs text-sm text-muted">
+      {locations.length} {locations.length === 1 ? 'Standort' : 'Standorte'} – gepflegt in Storyblok.
+    </p>
+
+    <!-- Desktop: Liste links, Karte rechts (per order). Mobil bleibt die DOM-
+         Reihenfolge: Karte oben, Liste darunter. -->
+    <div class="mt-lg grid gap-lg lg:grid-cols-[22rem_1fr]">
+      <!-- Kartencontainer: wird clientseitig von Leaflet befuellt (braucht feste Hoehe). -->
+      <div
+        id="standorte-map"
+        class="h-[26rem] w-full rounded-lg border border-border lg:order-2 lg:h-[34rem]"
+        role="application"
+        aria-label="Karte der igefa-Standorte"
+      ></div>
+
+      <!-- Liste: serverseitig gerendert (funktioniert auch ohne JavaScript). -->
+      <ul id="standorte-list" class="divide-y divide-border rounded-lg border border-border lg:order-1">
+        {locations.map((location) => (
+          <li class="flex items-center justify-between gap-xs px-md py-sm transition-colors hover:bg-surface-alt">
+            <!-- Klick auf den Eintrag zeigt den Standort auf der Karte (per JS). -->
+            <button type="button" data-id={location.id} class="flex flex-1 flex-col items-start text-left">
+              <span class="font-semibold text-heading">{location.name}</span>
+              <span class="text-sm text-muted">{location.plz} {location.city}</span>
+            </button>
+            <!-- Link fuehrt zur Detailseite des Standorts. -->
+            <a href={`/${location.slug}`} class="shrink-0 text-sm font-semibold text-brand hover:no-underline">
+              Seite →
+            </a>
+          </li>
+        ))}
+        {locations.length === 0 && (
+          <li class="px-md py-sm text-sm text-muted">Noch keine Standorte in Storyblok angelegt.</li>
+        )}
+      </ul>
+    </div>
+  </main>
+
+  <!-- Standortdaten fuer das Karten-Skript (als JSON, nicht ausfuehrbar). -->
+  <script id="standorte-data" type="application/json" is:inline set:html={JSON.stringify(mapPoints)} />
+</Layout>
+
+<script>
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+  import iconUrl from 'leaflet/dist/images/marker-icon.png';
+  import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+  import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+  type MapPoint = {
+    id: string;
+    name: string;
+    slug: string;
+    street: string;
+    plz: string;
+    city: string;
+    phone: string;
+    lat: number;
+    lng: number;
+  };
+
+  // Standortdaten aus dem serverseitig gerenderten JSON-Block lesen.
+  const dataElement = document.getElementById('standorte-data');
+  const locations: MapPoint[] = dataElement ? JSON.parse(dataElement.textContent || '[]') : [];
+
+  // Leaflet-Standard-Marker: Bildpfade ueber Vite-Imports setzen, sonst sind die
+  // Icons nach dem Build kaputt (Leaflet raet sie sonst relativ zur CSS-Datei).
+  L.Icon.Default.mergeOptions({
+    iconUrl: (iconUrl as any).src ?? iconUrl,
+    iconRetinaUrl: (iconRetinaUrl as any).src ?? iconRetinaUrl,
+    shadowUrl: (shadowUrl as any).src ?? shadowUrl,
+  });
+
+  const map = L.map('standorte-map').setView([51.1, 10.2], 6);
+
+  // Freie OpenStreetMap-Kacheln (kein API-Schluessel). Fuer hohe Last spaeter
+  // einen eigenen Tile-Anbieter nutzen (OSM-Nutzungsregeln beachten).
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap-Mitwirkende',
+    maxZoom: 18,
+  }).addTo(map);
+
+  const markersById = new Map<string, L.Marker>();
+  const bounds: [number, number][] = [];
+
+  for (const location of locations) {
+    const marker = L.marker([location.lat, location.lng]).addTo(map);
+    marker.bindPopup(
+      `<strong>${location.name}</strong><br>${location.street}, ${location.plz} ${location.city}<br>${location.phone}` +
+        `<br><a href="/${location.slug}">Zur Standortseite »</a>`,
+    );
+    markersById.set(location.id, marker);
+    bounds.push([location.lat, location.lng]);
+  }
+
+  // Alle Standorte ins Bild ruecken (maxZoom verhindert Strassen-Zoom bei nur einem Pin).
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 11 });
+  }
+
+  // Listeneintrag anklicken -> zur Niederlassung fliegen und Popup oeffnen.
+  document.querySelectorAll<HTMLElement>('#standorte-list [data-id]').forEach((element) => {
+    element.addEventListener('click', () => {
+      const id = element.getAttribute('data-id');
+      const marker = id ? markersById.get(id) : undefined;
+      if (!marker) return;
+      map.flyTo(marker.getLatLng(), 11);
+      marker.openPopup();
+    });
+  });
+</script>

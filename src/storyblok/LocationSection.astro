@@ -1,0 +1,29 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+
+// blok = "location_section" — Standorte auf blauer Vollflaeche (wie im Original).
+const { blok } = Astro.props;
+const items = Array.isArray(blok.items) ? blok.items : [];
+---
+
+<section
+  {...storyblokEditable(blok)}
+  class="location-section"
+  style="background: linear-gradient(135deg, var(--color-brand), var(--color-brand-dark));"
+>
+  <div class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+    {blok.title && <h2 class="text-3xl font-bold text-surface md:text-4xl">{blok.title}</h2>}
+    <div class="mt-lg grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-4">
+      {items.map((item: any) => <StoryblokComponent blok={item} />)}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Full-Bleed: blaue Flaeche ueber die ganze Fensterbreite. */
+  .location-section {
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+</style>

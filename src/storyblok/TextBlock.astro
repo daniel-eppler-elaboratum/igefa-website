@@ -1,0 +1,44 @@
+---
+import { storyblokEditable, renderRichText } from '@storyblok/astro';
+
+// blok = "text_block" — Lead-Absatz (blau, fett) + Fliesstext als Rich Text
+// (Absaetze + Aufzaehlung mit blauen Bullets), wie der Intro-Text im Original.
+const { blok } = Astro.props;
+const bodyHtml = blok.body ? renderRichText(blok.body) : '';
+---
+
+<div {...storyblokEditable(blok)} class="mx-auto max-w-7xl px-md pb-xl pt-xl md:px-lg">
+  {blok.lead && <p class="text-xl font-bold leading-snug text-brand md:text-2xl">{blok.lead}</p>}
+  {bodyHtml && <div class="text-block-prose mt-lg text-lg text-ink" set:html={bodyHtml} />}
+</div>
+
+<style>
+  /* Rich-Text-Styling ohne Typography-Plugin — Farben/Abstaende aus Tokens. */
+  .text-block-prose :global(p) {
+    margin-block: 0.85rem;
+    line-height: 1.65;
+  }
+  .text-block-prose :global(ul) {
+    list-style: none;
+    margin-block: 0.85rem;
+    padding: 0;
+  }
+  .text-block-prose :global(li) {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-block: 0.35rem;
+  }
+  .text-block-prose :global(li)::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--color-brand);
+    font-weight: 700;
+  }
+  .text-block-prose :global(a) {
+    color: var(--color-brand);
+  }
+  .text-block-prose :global(strong) {
+    font-weight: 700;
+  }
+</style>

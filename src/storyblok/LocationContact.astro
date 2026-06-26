@@ -1,0 +1,16 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+
+// blok = "location_contact" — ein Ansprechpartner eines Standorts (Rolle + Person).
+const { blok } = Astro.props;
+const telHref = blok.phone ? `tel:${blok.phone.replace(/\s/g, '')}` : '';
+---
+
+<li {...storyblokEditable(blok)} class="py-sm">
+  <p class="font-semibold text-heading">{blok.role}</p>
+  {blok.name && <p class="text-ink">{blok.name}</p>}
+  <p class="mt-xs flex flex-wrap gap-md text-sm">
+    {blok.phone && <a href={telHref} class="text-brand">{blok.phone}</a>}
+    {blok.email && <a href={`mailto:${blok.email}`} class="text-brand">{blok.email}</a>}
+  </p>
+</li>

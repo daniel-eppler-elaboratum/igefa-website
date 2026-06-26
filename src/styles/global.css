@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* ============================================================
+   igefa — Design-Tokens (Single Source of Truth)
+   ------------------------------------------------------------
+   In Tailwind v4 sind @theme-Werte gleichzeitig echte CSS-Variablen
+   (z. B. var(--color-brand)) UND erzeugen Utility-Klassen
+   (z. B. bg-brand, text-ink, font-heading, p-md).
+
+   Komponenten verwenden IMMER diese Tokens fuer Farben/Schriften,
+   niemals hartkodierte Werte (kein #hex, kein eigener font-family).
+
+   Farb-/Schriftwerte abgeleitet aus dem Live-igefa-Theme (CI).
+   ============================================================ */
+@theme {
+  /* ---- Farben (Corporate Identity) ---- */
+  --color-brand: #0068ab;          /* igefa-Blau (primaer) */
+  --color-brand-dark: #00334d;     /* Navy — Headlines, Hover */
+  --color-brand-light: #0097db;    /* helles Blau — Links/Akzente */
+  --color-accent: #c90a21;         /* Signal-Rot — CTAs */
+  --color-accent-dark: #b20017;    /* Rot — Hover */
+  --color-ink: #333333;            /* Fliesstext */
+  --color-heading: #00334d;        /* Ueberschriften */
+  --color-muted: #3d3d3d;          /* gedaempfter Text (dunkles Grau wie igefa-CI) */
+  --color-surface: #ffffff;        /* Standard-Hintergrund */
+  --color-surface-alt: #eaeef1;    /* abgesetzte Flaechen/Karten */
+  --color-border: #dadada;         /* Linien/Rahmen */
+
+  /* ---- Schriften ---- */
+  --font-sans: "Mulish", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-heading: "Mulish", system-ui, sans-serif;
+
+  /* ---- Abstaende (Skala) ---- */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 4rem;
+
+  /* ---- Radius ---- */
+  --radius-base: 0.5rem;
+  --radius-lg: 1rem;
+}
+
+/* ============================================================
+   Reset + Basis-Typografie
+   (Tailwind "Preflight" liefert bereits einen Grund-Reset;
+   hier projektspezifische Ergaenzungen, alle auf Tokens basierend.)
+   ============================================================ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    /* Gesamte Seite auf grauer Flaeche (wie im Original); weisse Karten/Header
+       und farbige Sektionen (Hero/Standorte/Footer) heben sich davon ab. */
+    background-color: var(--color-surface-alt);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--color-heading);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  a {
+    color: var(--color-brand);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-brand-dark);
+    text-decoration: underline;
+  }
+
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+  }
+}

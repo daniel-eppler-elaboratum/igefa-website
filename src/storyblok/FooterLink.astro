@@ -1,0 +1,14 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = "footer_link" — ein Link in einer Footer-Spalte oder der Legal-Leiste.
+const { blok } = Astro.props;
+const href = resolveNavLink(blok.link);
+---
+
+<li {...storyblokEditable(blok)}>
+  <a href={href} class="text-surface/80 transition-colors hover:text-surface hover:no-underline">
+    {blok.label}
+  </a>
+</li>

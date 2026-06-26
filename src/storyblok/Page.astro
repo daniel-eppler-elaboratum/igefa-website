@@ -1,0 +1,13 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+
+const { blok } = Astro.props;
+---
+
+<main {...storyblokEditable(blok)}>
+  {/* Kein eigener Container/Padding hier — jede Sektion steuert Breite (max-w-7xl)
+      und Abstaende selbst. So koennen Vollflaechen-Sektionen (z.B. Standorte) ganz
+      ueber die Breite gehen. */}
+  {blok.body?.map((nestedBlok: any) => <StoryblokComponent blok={nestedBlok} />)}
+</main>

@@ -1,0 +1,17 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+
+// blok = "footer_column" — eine Footer-Spalte: Titel + Link-Liste.
+const { blok } = Astro.props;
+const links = Array.isArray(blok.links) ? blok.links : [];
+---
+
+<div {...storyblokEditable(blok)}>
+  {blok.title && (
+    <h3 class="text-sm font-bold uppercase tracking-wide text-surface">{blok.title}</h3>
+  )}
+  <ul class="mt-md flex flex-col gap-sm">
+    {links.map((link: any) => <StoryblokComponent blok={link} />)}
+  </ul>
+</div>

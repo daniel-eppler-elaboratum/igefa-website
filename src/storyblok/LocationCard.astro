@@ -1,0 +1,31 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = "location_card" — Standort auf blauem Grund: Foto, Land (weiss),
+// Kurztext (hell), gefuellter Navy-Button.
+const { blok } = Astro.props;
+const href = resolveNavLink(blok.link);
+const imageUrl = blok.image?.filename ?? '';
+---
+
+<div {...storyblokEditable(blok)} class="flex h-full flex-col">
+  {imageUrl && (
+    <div class="overflow-hidden rounded-lg">
+      <img src={imageUrl} alt={blok.image?.alt ?? ''} class="aspect-[16/9] w-full object-cover" />
+    </div>
+  )}
+  {blok.country && <h3 class="mt-md text-lg font-bold text-surface">{blok.country}</h3>}
+  {blok.intro_text && <p class="mt-xs mb-md text-surface/80">{blok.intro_text}</p>}
+  {blok.link_label && (
+    <a
+      href={href}
+      class="mt-auto inline-flex w-fit items-center gap-xs rounded-base bg-brand-dark px-md py-xs font-semibold text-surface transition-opacity hover:opacity-80 hover:no-underline"
+    >
+      {blok.link_label}
+      <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 10h10M11 6l4 4-4 4" />
+      </svg>
+    </a>
+  )}
+</div>

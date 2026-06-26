@@ -1,0 +1,39 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = "service_tile" — weisse Karten-Box: Bild oben mit kurzem blauen Akzent-
+// Balken am unteren Bildrand (linksbuendig zum Text), darunter Titel + Kurztext.
+const { blok } = Astro.props;
+const href = resolveNavLink(blok.link);
+const imageUrl = blok.image?.filename ?? '';
+const iconUrl = blok.icon?.filename ?? '';
+---
+
+<a
+  {...storyblokEditable(blok)}
+  href={href}
+  class="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition-shadow hover:shadow-md hover:no-underline"
+>
+  <div class="relative">
+    {imageUrl && (
+      <img
+        src={imageUrl}
+        alt={blok.image?.alt ?? ''}
+        class="aspect-[16/9] w-full object-cover"
+      />
+    )}
+    {/* Leichter blauer Schleier beim Hover ueber das Bild. */}
+    <div class="absolute inset-0 bg-brand/0 transition-colors duration-300 group-hover:bg-brand/25"></div>
+    {/* Kurzer, abgerundeter Akzent-Balken auf der Kante Bild/Box (haelftig in beide),
+        helleres CI-Blau, linksbuendig zum Inhalt. */}
+    <span class="absolute bottom-0 left-md h-1.5 w-24 translate-y-1/2 rounded-full bg-brand-light"></span>
+  </div>
+  <div class="p-md">
+    <div class="flex items-center gap-sm">
+      {iconUrl && <img src={iconUrl} alt="" class="h-6 w-6 shrink-0 object-contain" />}
+      <h3 class="text-lg font-bold text-ink group-hover:text-brand">{blok.title}</h3>
+    </div>
+    {blok.body && <p class="mt-xs text-muted">{blok.body}</p>}
+  </div>
+</a>

@@ -1,0 +1,26 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = Storyblok-Block "nav_link".
+// mobile = true -> eingeklapptes Handy-Menue. mega = true -> Spalte im Mega-Menue (mit Pfeil).
+const { blok, mobile = false, mega = false } = Astro.props;
+const href = resolveNavLink(blok.link);
+
+let linkClass: string;
+if (mega) {
+  linkClass = 'flex items-center gap-xs py-xs text-sm text-ink hover:text-brand hover:no-underline';
+} else if (mobile) {
+  linkClass = 'block px-md py-sm text-ink hover:text-brand hover:no-underline';
+} else {
+  linkClass =
+    'block px-md py-sm text-ink transition-colors hover:bg-surface-alt hover:text-brand hover:no-underline';
+}
+---
+
+<li {...storyblokEditable(blok)}>
+  <a href={href} class={linkClass}>
+    {mega && <span aria-hidden="true" class="text-brand">&#8594;</span>}
+    {blok.label}
+  </a>
+</li>

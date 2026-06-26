@@ -1,0 +1,138 @@
+---
+// Standortsuche (POC): Ort/PLZ eingeben -> naechstgelegene Niederlassung.
+// Server-seitig (SSR): liest ?name= aus der URL, geocodet, findet die naechsten
+// Standorte. Eigene Route -> hat Vorrang vor der Catch-all-Seite [...slug].astro.
+import Layout from '../layouts/Layout.astro';
+import { geocode, findNearest, knownCities, type NearestResult } from '../lib/geo';
+import { getLocations, type LocationPoint } from '../lib/locations';
+
+const query = Astro.url.searchParams.get('name')?.trim() ?? '';
+
+// Standorte kommen aus Storyblok (Inhaltstyp `location`).
+const locations = await getLocations();
+
+let results: NearestResult<LocationPoint>[] = [];
+let notFound = false;
+
+if (query) {
+  const place = geocode(query);
+  if (place) {
+    results = findNearest(place.lat, place.lng, locations, 3);
+  } else {
+    notFound = true;
+  }
+}
+
+const [nearest, ...further] = results;
+const formatKm = (km: number): string => `${km.toFixed(0)} km`;
+---
+
+<Layout title="Kontakt – Standort finden">
+  <main class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+    <p class="text-sm font-semibold text-accent">Kontakt</p>
+    <h1 class="mt-sm text-3xl font-bold text-heading md:text-4xl">
+      Finden Sie Ihren Ansprechpartner
+    </h1>
+    <p class="mt-sm max-w-[42rem] text-muted">
+      Geben Sie Ihren Ort oder Ihre Postleitzahl ein – wir zeigen Ihnen die
+      nächstgelegene Niederlassung mit den passenden Ansprechpartnern.
+    </p>
+
+    <!-- Suchformular: GET -> landet als ?name= in der URL (teilbar, SSR-freundlich). -->
+    <form method="get" class="mt-lg flex max-w-[36rem] gap-xs">
+      <input
+        type="text"
+        name="name"
+        value={query}
+        placeholder="z. B. Aalen oder 73430"
+        aria-label="Ort oder Postleitzahl"
+        class="flex-1 rounded-base border border-border bg-surface px-md py-sm text-ink focus:border-brand focus:outline-none"
+      />
+      <button
+        type="submit"
+        class="rounded-base bg-brand px-lg py-sm font-semibold text-surface transition-colors hover:bg-brand-dark"
+      >
+        Suchen
+      </button>
+    </form>
+
+    <!-- POC-Hinweis: Datenbasis ist bewusst klein + Demo. -->
+    <p class="mt-xs text-sm text-muted">
+      Prototyp mit Demo-Daten – verfügbare Orte: {knownCities().join(', ')}.
+    </p>
+
+    {notFound && (
+      <div class="mt-lg rounded-lg border border-border bg-surface-alt p-md">
+        <p class="font-semibold text-heading">Ort „{query}" nicht gefunden.</p>
+        <p class="mt-xs text-muted">
+          Diese kleine Demo kennt nur ausgewählte Orte. Bitte einen der oben
+          genannten Orte oder dessen Postleitzahl eingeben.
+        </p>
+      </div>
+    )}
+
+    {nearest && (
+      <section class="mt-xl">
+        <h2 class="text-center text-2xl font-bold text-heading">
+          Ihre nächstgelegene Niederlassung:
+        </h2>
+
+        <article class="mx-auto mt-lg max-w-[42rem] rounded-lg border border-border bg-surface p-lg">
+          <div class="flex items-baseline justify-between gap-md">
+            <h3 class="text-xl font-bold text-heading">{nearest.location.name}</h3>
+            <span class="shrink-0 rounded-base bg-brand-light px-sm py-xs text-sm font-semibold text-brand-dark">
+              ca. {formatKm(nearest.distanceKm)} entfernt
+            </span>
+          </div>
+
+          <p class="mt-sm text-muted">
+            {nearest.location.street}, {nearest.location.plz} {nearest.location.city}
+          </p>
+          <p class="mt-xs text-muted">
+            Tel.: <a href={`tel:${nearest.location.phone.replace(/\s/g, '')}`} class="text-brand">{nearest.location.phone}</a>
+          </p>
+
+          <h4 class="mt-lg font-semibold text-heading">Ihre Branchenteams:</h4>
+          <ul class="mt-sm divide-y divide-border">
+            {nearest.location.teams.map((team) => (
+              <li class="flex flex-wrap items-center justify-between gap-xs py-sm">
+                <span class="font-medium text-ink">{team.name}</span>
+                <span class="flex items-center gap-md text-sm">
+                  <a href={`tel:${team.phone.replace(/\s/g, '')}`} class="text-brand">{team.phone}</a>
+                  <a href={`mailto:${team.email}`} class="text-brand">E-Mail</a>
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {nearest.location.slug && (
+            <a href={`/${nearest.location.slug}`} class="mt-lg inline-block font-semibold text-brand">
+              Zur Standortseite »
+            </a>
+          )}
+        </article>
+
+        {further.length > 0 && (
+          <div class="mx-auto mt-lg max-w-[42rem]">
+            <h3 class="font-semibold text-heading">Weitere Standorte in der Nähe</h3>
+            <ul class="mt-sm space-y-xs">
+              {further.map((result) => (
+                <li>
+                  <a
+                    href={`/${result.location.slug}`}
+                    class="flex items-center justify-between rounded-base border border-border bg-surface px-md py-sm transition-colors hover:bg-surface-alt hover:no-underline"
+                  >
+                    <span class="text-ink">
+                      {result.location.name} – {result.location.city}
+                    </span>
+                    <span class="text-sm text-muted">ca. {formatKm(result.distanceKm)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+    )}
+  </main>
+</Layout>

@@ -1,0 +1,71 @@
+---
+import { storyblokEditable, renderRichText } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = "location" — Detailseite einer Niederlassung (eigene Story/Seite).
+const { blok } = Astro.props;
+const teams = Array.isArray(blok.teams) ? blok.teams : [];
+const contacts = Array.isArray(blok.contacts) ? blok.contacts : [];
+const openingHoursHtml = blok.opening_hours ? renderRichText(blok.opening_hours) : '';
+const routeHref = resolveNavLink(blok.route_link);
+const imageUrl = blok.image?.filename ?? '';
+const telHref = blok.phone ? `tel:${blok.phone.replace(/\s/g, '')}` : '';
+---
+
+<main {...storyblokEditable(blok)} class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+  <h1 class="text-3xl font-bold text-heading md:text-4xl">{blok.name}</h1>
+  {blok.intro && <p class="mt-sm max-w-[46rem] text-muted">{blok.intro}</p>}
+
+  {imageUrl && (
+    <div class="mt-lg overflow-hidden rounded-lg">
+      <img src={imageUrl} alt={blok.image?.alt ?? blok.name} class="aspect-[21/9] w-full object-cover" />
+    </div>
+  )}
+
+  <div class="mt-lg grid gap-lg md:grid-cols-2">
+    <section>
+      <h2 class="text-xl font-bold text-heading">Adresse</h2>
+      <p class="mt-sm text-muted">
+        {blok.street}<br />
+        {blok.zip} {blok.city}<br />
+        {blok.country}
+      </p>
+      {blok.phone && (
+        <p class="mt-sm text-muted">Tel.: <a href={telHref} class="text-brand">{blok.phone}</a></p>
+      )}
+      {blok.fax && <p class="text-muted">Fax: {blok.fax}</p>}
+      {blok.email && (
+        <p class="text-muted">E-Mail: <a href={`mailto:${blok.email}`} class="text-brand">{blok.email}</a></p>
+      )}
+      {routeHref !== '#' && (
+        <a href={routeHref} class="mt-sm inline-block font-semibold text-brand">Routenplaner</a>
+      )}
+    </section>
+
+    {openingHoursHtml && (
+      <section>
+        <h2 class="text-xl font-bold text-heading">Öffnungszeiten</h2>
+        <div class="mt-sm text-muted" set:html={openingHoursHtml} />
+      </section>
+    )}
+  </div>
+
+  {teams.length > 0 && (
+    <section class="mt-xl">
+      <h2 class="text-xl font-bold text-heading">Unsere Branchenteams unterstützen Sie gern:</h2>
+      <ul class="mt-sm max-w-[46rem] divide-y divide-border">
+        {teams.map((team: any) => <StoryblokComponent blok={team} />)}
+      </ul>
+    </section>
+  )}
+
+  {contacts.length > 0 && (
+    <section class="mt-xl">
+      <h2 class="text-xl font-bold text-heading">Für Ihr Anliegen rund um den Standort:</h2>
+      <ul class="mt-sm grid gap-md sm:grid-cols-2 lg:grid-cols-3">
+        {contacts.map((contact: any) => <StoryblokComponent blok={contact} />)}
+      </ul>
+    </section>
+  )}
+</main>

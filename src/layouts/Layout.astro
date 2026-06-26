@@ -1,0 +1,50 @@
+---
+import '../styles/global.css';
+import { useStoryblokApi } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'igefa' } = Astro.props;
+
+// Header (aus "config") und Footer (aus "footer") laden — auf jeder Seite gleich.
+// Getrennte try-Bloecke: faellt eines aus, bleibt das andere erhalten statt zu crashen.
+const storyblokApi = useStoryblokApi();
+let headerBlok = null;
+let footerBlok = null;
+try {
+  const { data } = await storyblokApi.get('cdn/stories/config', { version: 'draft' });
+  headerBlok = data.story?.content?.header?.[0] ?? null;
+} catch (error) {
+  console.error('Header konnte nicht geladen werden:', error instanceof Error ? error.message : error);
+}
+try {
+  const { data } = await storyblokApi.get('cdn/stories/footer', { version: 'draft' });
+  footerBlok = data.story?.content ?? null;
+} catch (error) {
+  console.error('Footer konnte nicht geladen werden:', error instanceof Error ? error.message : error);
+}
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- igefa-Hausschrift Mulish (Design-Token --font-sans / --font-heading) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..900;1,200..900&display=swap"
+    />
+    <title>{title}</title>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    {headerBlok && <StoryblokComponent blok={headerBlok} />}
+    <div class="flex-1"><slot /></div>
+    {footerBlok && <StoryblokComponent blok={footerBlok} />}
+  </body>
+</html>

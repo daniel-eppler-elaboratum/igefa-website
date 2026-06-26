@@ -1,0 +1,26 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = Storyblok-Block "nav_promo" (Teaser-Karte rechts im Mega-Menue).
+const { blok } = Astro.props;
+const imageUrl = blok.image?.filename ?? '';
+const href = resolveNavLink(blok.link);
+const hasCta = Boolean(blok.link_label) && href !== '#';
+---
+
+<aside {...storyblokEditable(blok)} class="rounded-lg bg-surface-alt p-md">
+  {imageUrl && (
+    <img src={imageUrl} alt={blok.title ?? ''} loading="lazy" class="mb-sm w-full rounded-base" />
+  )}
+  {blok.title && <p class="font-bold text-heading">{blok.title}</p>}
+  {blok.text && <p class="mt-xs text-sm text-muted">{blok.text}</p>}
+  {hasCta && (
+    <a
+      href={href}
+      class="mt-sm inline-flex items-center gap-xs text-sm font-semibold text-accent hover:text-accent-dark hover:no-underline"
+    >
+      <span aria-hidden="true">&#8594;</span>{blok.link_label}
+    </a>
+  )}
+</aside>

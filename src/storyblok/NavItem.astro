@@ -1,0 +1,101 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = Storyblok-Block "nav_item". mobile = true -> eingeklapptes Handy-Menue.
+const { blok, mobile = false } = Astro.props;
+
+const columns = Array.isArray(blok.columns) ? blok.columns : [];
+const children = Array.isArray(blok.children) ? blok.children : [];
+const promoBlok = Array.isArray(blok.promo) && blok.promo.length > 0 ? blok.promo[0] : null;
+
+// Priorisierung: Mega-Spalten -> breites Mega-Menue, sonst Unterpunkte -> Dropdown, sonst Link.
+const isMega = columns.length > 0;
+const hasChildren = children.length > 0;
+const href = resolveNavLink(blok.link);
+
+// Pfeil-Icon (klappt bei geoeffnetem Menue um).
+const chevron =
+  '<svg class="h-4 w-4 transition-transform" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const triggerClass =
+  'flex items-center gap-xs rounded-base px-md py-sm font-semibold text-heading transition-colors hover:bg-surface-alt hover:text-brand hover:no-underline';
+const plainClass =
+  'block rounded-base px-md py-sm font-semibold text-heading transition-colors hover:bg-surface-alt hover:text-brand hover:no-underline';
+---
+
+{mobile ? (
+  isMega ? (
+    /* Mobil, Mega: Spalten gestapelt im Akkordeon. */
+    <li {...storyblokEditable(blok)}>
+      <details class="group/acc border-b border-border">
+        <summary class="flex cursor-pointer list-none items-center justify-between px-md py-sm font-semibold text-heading marker:content-none">
+          {blok.label}
+          <span class="transition-transform group-open/acc:rotate-180" set:html={chevron} />
+        </summary>
+        <div class="space-y-md px-md pb-md">
+          {columns.map((col: any) => <StoryblokComponent blok={col} />)}
+          {promoBlok && <StoryblokComponent blok={promoBlok} />}
+        </div>
+      </details>
+    </li>
+  ) : hasChildren ? (
+    /* Mobil, einfaches Dropdown: Unterpunkte im Akkordeon. */
+    <li {...storyblokEditable(blok)}>
+      <details class="group/acc border-b border-border">
+        <summary class="flex cursor-pointer list-none items-center justify-between px-md py-sm font-semibold text-heading marker:content-none">
+          {blok.label}
+          <span class="transition-transform group-open/acc:rotate-180" set:html={chevron} />
+        </summary>
+        <ul class="flex flex-col pb-sm pl-md">
+          {children.map((child: any) => <StoryblokComponent blok={child} mobile />)}
+        </ul>
+      </details>
+    </li>
+  ) : (
+    <li {...storyblokEditable(blok)} class="border-b border-border">
+      <a href={href} class="block px-md py-sm font-semibold text-heading hover:text-brand hover:no-underline">{blok.label}</a>
+    </li>
+  )
+) : isMega ? (
+  /* Desktop, Mega: breites Panel ueber die Header-Breite (li ohne relative -> Anker = Header). */
+  <li {...storyblokEditable(blok)} class="group">
+    <a href={href} class={triggerClass}>
+      {blok.label}
+      <span class="transition-transform group-hover:rotate-180" set:html={chevron} />
+    </a>
+    {/* -mt-md + pt-md = unsichtbare Hover-Bruecke ueber das 16px-Polster (py-md)
+        zwischen Menuepunkt und Header-Unterkante. Verhindert, dass das Mega-Menue
+        beim Runterfahren in die Luecke schliesst. Panel bleibt optisch an der Kante. */}
+    <div class="pointer-events-none absolute left-0 right-0 top-full z-40 -mt-md pt-md opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+      <div class="border-t border-border bg-surface shadow-lg">
+        <div class="mx-auto flex max-w-7xl gap-xl px-md py-lg md:px-lg">
+          <div class="grid flex-1 grid-cols-2 gap-x-lg gap-y-lg lg:grid-cols-3">
+            {columns.map((col: any) => <StoryblokComponent blok={col} />)}
+          </div>
+          {promoBlok && (
+            <div class="w-64 shrink-0">
+              <StoryblokComponent blok={promoBlok} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </li>
+) : hasChildren ? (
+  /* Desktop, einfaches Dropdown: schmales Panel unter dem Punkt. */
+  <li {...storyblokEditable(blok)} class="group relative">
+    <a href={href} class={triggerClass}>
+      {blok.label}
+      <span class="transition-transform group-hover:rotate-180" set:html={chevron} />
+    </a>
+    <ul class="pointer-events-none absolute left-0 top-full z-40 min-w-56 -translate-y-1 rounded-lg border border-border bg-surface py-sm opacity-0 shadow-lg transition-all duration-150 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+      {children.map((child: any) => <StoryblokComponent blok={child} />)}
+    </ul>
+  </li>
+) : (
+  <li {...storyblokEditable(blok)}>
+    <a href={href} class={plainClass}>{blok.label}</a>
+  </li>
+)}

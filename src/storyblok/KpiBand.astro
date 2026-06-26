@@ -1,0 +1,66 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+
+// blok = "kpi_band" — Sektion "Wir in Zahlen": Ueberschrift + Intro + KPI-Raster.
+const { blok } = Astro.props;
+const items = Array.isArray(blok.items) ? blok.items : [];
+---
+
+<section {...storyblokEditable(blok)} class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+  {blok.title && <h2 class="text-3xl font-bold text-heading md:text-4xl">{blok.title}</h2>}
+  {blok.intro && <p class="mt-md max-w-5xl text-lg text-muted">{blok.intro}</p>}
+  <div class="mt-xl grid grid-cols-2 gap-x-lg gap-y-xl md:grid-cols-4">
+    {items.map((item: any) => <StoryblokComponent blok={item} />)}
+  </div>
+</section>
+
+<script>
+  // KPI-Zahlen zaehlen hoch, sobald sie ins Bild scrollen (wie im Original).
+  // Praefix (z.B. "ca. "), Suffix (z.B. " qm") und Tausender-Apostroph bleiben erhalten.
+  function groupThousands(n: number) {
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  }
+
+  function animateKpi(el: HTMLElement) {
+    const target = parseInt(el.dataset.target || '0', 10);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const duration = 1400;
+    let startTs: number | null = null;
+
+    function step(ts: number) {
+      if (startTs === null) startTs = ts;
+      const progress = Math.min(1, (ts - startTs) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = prefix + groupThousands(Math.round(target * eased)) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          animateKpi(entry.target as HTMLElement);
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.4 },
+  );
+
+  document.querySelectorAll<HTMLElement>('.kpi-value').forEach((el) => {
+    const raw = (el.dataset.value || el.textContent || '').trim();
+    const match = raw.match(/^(\D*)([\d'.\s]*\d)(\D*)$/);
+    if (!match) return;
+    el.dataset.prefix = match[1];
+    el.dataset.suffix = match[3];
+    el.dataset.target = String(parseInt(match[2].replace(/\D/g, ''), 10));
+    if (reduceMotion) return; // Endwert stehen lassen, nicht animieren
+    el.textContent = match[1] + '0' + match[3];
+    observer.observe(el);
+  });
+</script>

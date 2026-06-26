@@ -1,0 +1,15 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+
+// blok = "highlight_section" — Ueberschrift + Highlight-Raster (z.B. News/Themen).
+const { blok } = Astro.props;
+const items = Array.isArray(blok.items) ? blok.items : [];
+---
+
+<section {...storyblokEditable(blok)} class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+  {blok.title && <h2 class="text-3xl font-bold text-heading md:text-4xl">{blok.title}</h2>}
+  <div class="mt-lg grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-3">
+    {items.map((item: any) => <StoryblokComponent blok={item} />)}
+  </div>
+</section>

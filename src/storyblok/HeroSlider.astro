@@ -1,0 +1,178 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+
+// blok = Storyblok-Block "hero_slider".
+const { blok } = Astro.props;
+const slides = Array.isArray(blok.slides) ? blok.slides : [];
+
+// Autoplay standardmaessig an; Intervall in Sekunden (Feld-Default 6).
+const autoplay = blok.autoplay !== false;
+const intervalSeconds = Number(blok.interval_seconds) > 0 ? Number(blok.interval_seconds) : 6;
+const hasMultiple = slides.length > 1;
+---
+
+<section
+  {...storyblokEditable(blok)}
+  class="hero-slider relative"
+  aria-roledescription="carousel"
+  aria-label="Hero-Slider"
+  data-autoplay={autoplay ? 'true' : 'false'}
+  data-interval={intervalSeconds}
+  tabindex="-1"
+>
+  {/* Viewport clippt die Nachbar-Slides; der Track wird per translateX verschoben. */}
+  <div class="hero-viewport relative overflow-hidden">
+    <div class="hero-track flex transition-transform duration-700 ease-out">
+      {slides.map((slide: any, i: number) => (
+        <div
+          class="hero-cell w-full shrink-0"
+          role="group"
+          aria-roledescription="Slide"
+          aria-label={`${i + 1} von ${slides.length}`}
+          aria-hidden={i === 0 ? 'false' : 'true'}
+        >
+          <StoryblokComponent blok={slide} />
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {hasMultiple && (
+    <>
+      {/* Vor/Zurueck-Pfeile, vertikal zentriert. */}
+      <button
+        type="button"
+        class="hero-prev absolute left-md top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface/80 text-brand shadow-md transition-colors hover:bg-surface"
+        aria-label="Vorheriger Slide"
+      >
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="hero-next absolute right-md top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface/80 text-brand shadow-md transition-colors hover:bg-surface"
+        aria-label="Naechster Slide"
+      >
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+
+      {/* Punkt-Pagination unten mittig. */}
+      <div class="hero-dots absolute inset-x-0 bottom-10 z-40 flex justify-center gap-sm" role="tablist" aria-label="Slide-Auswahl">
+        {slides.map((_slide: any, i: number) => (
+          <button
+            type="button"
+            class="hero-dot h-2.5 w-2.5 rounded-full transition-transform"
+            role="tab"
+            aria-label={`Zu Slide ${i + 1}`}
+            aria-current={i === 0 ? 'true' : 'false'}
+          ></button>
+        ))}
+      </div>
+    </>
+  )}
+</section>
+
+<style>
+  /* Full-Bleed: Der Hero spannt immer ueber die volle Fensterbreite, auch wenn
+     er in einem zentrierten Container (z. B. Page.astro max-w-5xl) steckt. */
+  .hero-slider {
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  /* Pagination-Punkte: aktiver Punkt hervorgehoben — Farben aus Design-Tokens. */
+  .hero-dot {
+    background-color: color-mix(in srgb, var(--color-surface) 45%, transparent);
+  }
+  .hero-dot[aria-current='true'] {
+    background-color: var(--color-surface);
+    transform: scale(1.35);
+  }
+</style>
+
+<script>
+  // Minimaler Vanilla-Slider — keine externe Library.
+  function initHeroSlider(root: HTMLElement) {
+    if (root.dataset.heroInit) return;
+    root.dataset.heroInit = '1';
+
+    const track = root.querySelector<HTMLElement>('.hero-track');
+    const cells = Array.from(root.querySelectorAll<HTMLElement>('.hero-cell'));
+    const dots = Array.from(root.querySelectorAll<HTMLElement>('.hero-dot'));
+    const prev = root.querySelector<HTMLElement>('.hero-prev');
+    const next = root.querySelector<HTMLElement>('.hero-next');
+    const count = cells.length;
+    if (!track || count <= 1) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const autoplay = root.dataset.autoplay === 'true' && !reduceMotion;
+    const intervalMs = Math.max(2, parseInt(root.dataset.interval || '6', 10)) * 1000;
+
+    let index = 0;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    function show(target: number) {
+      index = (target + count) % count;
+      track!.style.transform = `translateX(-${index * 100}%)`;
+      dots.forEach((dot, i) => dot.setAttribute('aria-current', i === index ? 'true' : 'false'));
+      cells.forEach((cell, i) => cell.setAttribute('aria-hidden', i === index ? 'false' : 'true'));
+    }
+
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+    function start() {
+      if (!autoplay) return;
+      stop();
+      timer = setInterval(() => show(index + 1), intervalMs);
+    }
+    function restart() {
+      stop();
+      start();
+    }
+
+    prev?.addEventListener('click', () => {
+      show(index - 1);
+      restart();
+    });
+    next?.addEventListener('click', () => {
+      show(index + 1);
+      restart();
+    });
+    dots.forEach((dot, i) =>
+      dot.addEventListener('click', () => {
+        show(i);
+        restart();
+      }),
+    );
+
+    // Tastatur: Pfeiltasten blaettern, wenn der Fokus im Slider liegt.
+    root.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        show(index - 1);
+        restart();
+      } else if (event.key === 'ArrowRight') {
+        show(index + 1);
+        restart();
+      }
+    });
+
+    // Autoplay pausiert bei Hover/Fokus.
+    root.addEventListener('mouseenter', stop);
+    root.addEventListener('mouseleave', start);
+    root.addEventListener('focusin', stop);
+    root.addEventListener('focusout', start);
+
+    show(0);
+    start();
+  }
+
+  document.querySelectorAll<HTMLElement>('.hero-slider').forEach(initHeroSlider);
+</script>

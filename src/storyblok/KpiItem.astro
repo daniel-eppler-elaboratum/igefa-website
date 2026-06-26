@@ -1,0 +1,18 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+
+// blok = "kpi_item" — Kennzahl: grosse CI-Blau-Zahl (zaehlt hoch), Label (dunkel)
+// + Sub-Label (blau). Zentriert wie im Original.
+const { blok } = Astro.props;
+---
+
+<div {...storyblokEditable(blok)} class="text-center">
+  <div
+    class="kpi-value whitespace-nowrap text-4xl font-extrabold leading-none text-brand md:text-5xl"
+    data-value={blok.value}
+  >
+    {blok.value}
+  </div>
+  {blok.label && <div class="mt-md font-semibold text-heading">{blok.label}</div>}
+  {blok.sublabel && <div class="text-sm text-brand">{blok.sublabel}</div>}
+</div>

@@ -1,0 +1,62 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = "site_footer" — Navy-Footer: Claim, Social-Icons, 4 Link-Spalten,
+// Zertifikats-Badges, Legal-Leiste (zentriert), Copyright (zentriert), INPACS.
+const { blok } = Astro.props;
+const socialLinks = Array.isArray(blok.social_links) ? blok.social_links : [];
+const columns = Array.isArray(blok.columns) ? blok.columns : [];
+const badges = Array.isArray(blok.badges) ? blok.badges : [];
+const legalLinks = Array.isArray(blok.legal_links) ? blok.legal_links : [];
+const inpacsHref = resolveNavLink(blok.inpacs_link);
+---
+
+<footer {...storyblokEditable(blok)} class="text-surface" style="background: var(--color-brand-dark);">
+  <div class="mx-auto max-w-7xl px-md py-xl md:px-lg">
+    {blok.claim && <p class="text-lg text-surface/90 md:text-xl">{blok.claim}</p>}
+
+    <hr class="mt-lg border-0 border-t border-surface/20" />
+
+    {socialLinks.length > 0 && (
+      <ul class="mt-lg flex flex-wrap justify-center gap-md">
+        {socialLinks.map((s: any) => (
+          <li><StoryblokComponent blok={s} /></li>
+        ))}
+      </ul>
+    )}
+
+    <div class="mt-xl grid grid-cols-2 gap-lg md:grid-cols-4">
+      {columns.map((column: any) => <StoryblokComponent blok={column} />)}
+    </div>
+
+    {badges.length > 0 && (
+      <div class="mt-xl flex flex-wrap items-center justify-center gap-lg">
+        {badges.map((badge: any) => (
+          <div class="flex h-24 w-24 items-center justify-center rounded-full bg-surface">
+            <img src={badge.filename} alt={badge.alt ?? ''} class="h-[82%] w-[82%] object-contain" />
+          </div>
+        ))}
+      </div>
+    )}
+
+    <hr class="mt-xl border-0 border-t border-surface/20" />
+
+    {legalLinks.length > 0 && (
+      <ul class="mt-md flex flex-wrap justify-center gap-x-lg gap-y-xs text-sm">
+        {legalLinks.map((link: any) => <StoryblokComponent blok={link} />)}
+      </ul>
+    )}
+
+    {blok.copyright && <p class="mt-md text-center text-sm text-surface/70">{blok.copyright}</p>}
+
+    {blok.inpacs_label && (
+      <p class="mt-md text-sm text-surface/70">
+        <a href={inpacsHref} class="text-surface/70 transition-colors hover:text-surface hover:no-underline">
+          {blok.inpacs_label}
+        </a>
+      </p>
+    )}
+  </div>
+</footer>

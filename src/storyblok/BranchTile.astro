@@ -1,0 +1,28 @@
+---
+import { storyblokEditable } from '@storyblok/astro';
+import { resolveNavLink } from '../lib/navigation';
+
+// blok = "branch_tile" — Branchen-Kachel (ganze Kachel klickbar).
+const { blok } = Astro.props;
+const href = resolveNavLink(blok.link);
+const imageUrl = blok.image?.filename ?? '';
+const iconUrl = blok.icon?.filename ?? '';
+---
+
+<a {...storyblokEditable(blok)} href={href} class="group block hover:no-underline">
+  {imageUrl && (
+    <div class="overflow-hidden rounded-lg">
+      <img
+        src={imageUrl}
+        alt={blok.image?.alt ?? ''}
+        class="aspect-[16/9] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+    </div>
+  )}
+  {blok.tag_label && <div class="mt-md text-sm font-semibold text-brand">{blok.tag_label}</div>}
+  <div class="mt-xs flex items-center justify-between gap-sm">
+    <h3 class="text-xl font-bold text-heading">{blok.title}</h3>
+    {iconUrl && <img src={iconUrl} alt="" class="h-8 w-8 shrink-0 object-contain" />}
+  </div>
+  {blok.subtitle && <p class="mt-xs text-muted">{blok.subtitle}</p>}
+</a>
