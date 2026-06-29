@@ -36,7 +36,7 @@ if (!story) {
 // (z. B. /config) sollen sie eine 404-Seite zeigen statt eines Render-Fehlers
 // ("No component found for blok site_config").
 const INTERNAL_CONTENT_TYPES = ['site_config', 'site_footer'];
-if (story && INTERNAL_CONTENT_TYPES.includes(story.content?.component)) {
+if (story && story.content?.component && INTERNAL_CONTENT_TYPES.includes(story.content.component)) {
   story = null;
 }
 

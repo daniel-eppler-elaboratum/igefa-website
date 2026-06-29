@@ -35,7 +35,8 @@ export async function getLocations(): Promise<LocationPoint[]> {
       per_page: 100,
     });
 
-    const stories = Array.isArray(data?.stories) ? data.stories : [];
+    // Storyblok liefert untypisierte Rohdaten; die Form wird im map() zu LocationPoint.
+    const stories: any[] = Array.isArray(data?.stories) ? data.stories : [];
 
     return stories
       .map((story: any): LocationPoint => {
